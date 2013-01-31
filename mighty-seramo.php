@@ -1,7 +1,9 @@
 <?php
 /*
- * Plugin Name: Seramo by mightystudios URI: http://mightystudios.net
- * Description: Send JSON requests to WordPress and get a response! Version: 1.0
+ * Plugin Name: Seramo by mightystudios
+ * URI: http://mightystudios.net
+ * Description: Send JSON requests to WordPress and get a response!
+ * Version: 1.0
  * Author: mightystudios.net
  */
 
@@ -11,6 +13,8 @@
 add_action ( 'init', 'mighty_seramo_init' );
 
 function mighty_seramo_init() {
+	error_reporting ( E_ALL );
+	ini_set ( "display_errors", 1 );
 	new mighty_seramo ();
 }
 
@@ -18,10 +22,18 @@ class mighty_seramo {
 	
 	private $new_slug = null;
 	
-	const WP_OPTION_SERAMO_SLUG = 'mighty_seramo_slug';
-	const DEFAULT_SLUG = 'seramo';
+	private static $path;
+	
+	private static $url;
+	
+	const WP_OPTION_SERAMO_SLUG		= 'mighty_seramo_slug';
+	const DEFAULT_SLUG				= 'seramo';
 	
 	function __construct() {
+		
+		$this->path							=	plugin_dir_path ( __FILE__ );
+		
+		$this->url 							=	plugins_url( basename(dirname(__FILE__)) . '/' );
 		
 		/*
 		 * get stored slug
@@ -46,8 +58,13 @@ class mighty_seramo {
 			define ( 'MIGHTY_SERAMO_SLUG', $MIGHTY_SERAMO_SLUG );
 		}
 		
-		add_filter ( 'query_vars', array (&$this, 'query_vars' ) );
-		$this->setup_json ();
+		// load the admin site of the plugin
+		if ( is_admin() ){
+			$this->admin_only();
+		}
+		
+		add_filter ( 'query_vars', array (&$this, 'update_query_vars' ) );
+		$this->setup_json();
 	}
 	
 	
@@ -71,7 +88,80 @@ class mighty_seramo {
 	}
 	
 	
+	private function admin_only(){
+		
+		add_action ( 'admin_menu', array ( &$this, 'register_plugin_menu') );
+		
+		add_action( 'wp_ajax_mighty_seramo_save_slug', array(&$this, 'form_save_slug') );
+		
+	}
 	
+	
+	
+	public function register_plugin_menu() {
+		add_options_page ( 'Seramo', 'Seramo', 'manage_options', 'mighty-seramo-options', array ($this,'page_seramo_options') );
+	}
+	
+	function page_seramo_options(){
+		
+		// load in the ui core and effects core
+		wp_enqueue_script("jquery-ui-core");
+		wp_enqueue_script("jquery-effects-core");
+		
+		wp_enqueue_script("jquery-ui-tabs");
+		
+		// load a jquery ui style from google
+		wp_register_style('jquery-ui-css', 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/themes/redmond/jquery-ui.css');
+		wp_enqueue_style('jquery-ui-css');
+		
+		
+		// load admin script
+		wp_enqueue_script('mighty-seramo-admin', $this->url . 'mighty.seramo.admin.js');
+		wp_enqueue_script('mighty-seramo-admin');
+		
+		$this->load_page ( 'options' );
+	}
+	
+	private function load_page($page) {
+		$page_file_path = $this->path . 'pages' . DIRECTORY_SEPARATOR . $page . '.php';
+		if (file_exists ( $page_file_path )) {
+			echo '<div id="mighty-page"><div class="wrap">';
+			include_once $page_file_path;
+			echo '</div></div>';
+		} else {
+			echo '<h1>Error, Page Cannot Be Found</h1>';
+			echo $page_file_path;
+		}
+	}
+	
+	
+	function form_save_slug(){
+		
+		$new_json_slug = sanitize_title( $_POST['new_slug'] );
+		$new_slug = wp_unique_post_slug($new_json_slug, 0 , 'publish', 'page', 0);
+		$this->set_new_slug( $new_slug );
+		return exit ( $new_slug );
+	}
+	
+	
+	/**
+	 * Sets the new slug in place for the json call
+	 *
+	 *
+	 *
+	 * @return (string) field string
+	 *
+	 */
+	private function set_new_slug( $new_slug ){
+				
+		$curent_slug_opt = get_option( self::WP_OPTION_SERAMO_SLUG );
+		
+		if($new_slug != $curent_slug_opt){
+			update_option(self::WP_OPTION_SERAMO_SLUG, $new_slug);
+			$this->update_rules();			
+		}
+
+	}
 	
 	private function setup_json() {
 		
@@ -111,6 +201,20 @@ class mighty_seramo {
 	}
 	
 	
+	/**
+	 * Runs the url rewrite flush and update
+	 *
+	 *
+	 *
+	 * @return (string) field string
+	 *
+	 */
+	private function update_rules(){
+	
+		add_filter('rewrite_rules_array', array(&$this, 'json_api_rewrites') );
+		add_action('update_option_json_api_base', array(&$this, 'flush_rewrite_rules'));
+		$this->flush_rewrite_rules();
+	}
 	
 	
 	function flush_rewrite_rules() {
@@ -146,14 +250,14 @@ class mighty_seramo {
 	
 	
 	/**
-	 * Puts the custom msjson slug into the query vars
+	 * Puts the custom seramo slug into the query vars
 	 *
 	 * TODO:: better description
 	 *
 	 * @return (string) field string
 	 *        
 	 */
-	function query_vars($wp_vars) {
+	function update_query_vars( $wp_vars ) {
 		$wp_vars [] = MIGHTY_SERAMO_SLUG;
 		return $wp_vars;
 	}
