@@ -12,14 +12,22 @@
  */
 add_action ( 'init', 'mighty_seramo_init' );
 
+
 function mighty_seramo_init() {
 	error_reporting ( E_ALL );
 	ini_set ( "display_errors", 1 );
+	
+	// include public functions file
+	require_once( 'functions.php' );
+	
 	new mighty_seramo ();
 }
 
+
 class mighty_seramo {
 	
+	private static $callbacks = array();
+
 	private $new_slug = null;
 	
 	private static $path;
@@ -27,7 +35,10 @@ class mighty_seramo {
 	private static $url;
 	
 	const WP_OPTION_SERAMO_SLUG		= 'mighty_seramo_slug';
+	
 	const DEFAULT_SLUG				= 'seramo';
+	
+	const BASE_PARAM				= 'mightystudios';
 	
 	function __construct() {
 		
@@ -88,6 +99,8 @@ class mighty_seramo {
 	}
 	
 	
+	
+	
 	private function admin_only(){
 		
 		add_action ( 'admin_menu', array ( &$this, 'register_plugin_menu') );
@@ -98,9 +111,13 @@ class mighty_seramo {
 	
 	
 	
+	
 	public function register_plugin_menu() {
 		add_options_page ( 'Seramo', 'Seramo', 'manage_options', 'mighty-seramo-options', array ($this,'page_seramo_options') );
 	}
+	
+	
+	
 	
 	function page_seramo_options(){
 		
@@ -119,8 +136,15 @@ class mighty_seramo {
 		wp_enqueue_script('mighty-seramo-admin', $this->url . 'mighty.seramo.admin.js');
 		wp_enqueue_script('mighty-seramo-admin');
 		
+		// load a jquery ui style from google
+		wp_enqueue_style('mighty-seramo-admin', $this->url . 'mighty.seramo.admin.css' );
+		//wp_enqueue_style('mighty-seramo-admin');
+		
 		$this->load_page ( 'options' );
 	}
+	
+	
+	
 	
 	private function load_page($page) {
 		$page_file_path = $this->path . 'pages' . DIRECTORY_SEPARATOR . $page . '.php';
@@ -133,6 +157,8 @@ class mighty_seramo {
 			echo $page_file_path;
 		}
 	}
+	
+	
 	
 	
 	function form_save_slug(){
@@ -191,11 +217,41 @@ class mighty_seramo {
 			
 			$slug_val = $this->get_json_slug ();
 			
-			$results = $_POST;
+			if($slug_val == self::BASE_PARAM){
+				return exit ( json_encode ( array('code' => 1, 'error'=>'No query target was found') ) );
+			}
 			
+			if( isset( self::$callbacks[ $slug_val ] ) ){
+				$cb_function = self::$callbacks[ $slug_val ] ['callback_function'];
+				
+				$cb_expected = self::$callbacks[ $slug_val ]['expected_parameters'];
+
+				$cb_expected_notfound = false;
+				
+				$cb_expected_notfound_items = array();
+				
+				// loop and check if all expected parameters are present
+				foreach( $cb_expected as $expected_param ){
+					
+					if( isset($_POST[ $expected_param ]) ){
+						$expected_param_val = $_POST[ $expected_param ];
+					}else{
+						$cb_expected_notfound = true;
+						$cb_expected_notfound_items[] = $expected_param;
+					}
+					
+				}
+				
+				if( $cb_expected_notfound ){
+					return exit ( json_encode ( array('code' => 2, 'error'=>'The following expected parameters where not found ('. implode(',',$cb_expected_notfound_items).')' ) ) );
+				}
+				
+				if( function_exists ( $cb_function ) ){
+					$results = call_user_func( $cb_function );
+				}
+				
+			}
 			return exit ( json_encode ( $results ) );
-			
-			exit ();
 		}
 	
 	}
@@ -277,7 +333,7 @@ class mighty_seramo {
 		
 		$base = MIGHTY_SERAMO_SLUG;
 		
-		$json_api_rules = array ("$base\$" => 'index.php?' . $base . '=catchall', "$base/(.+)\$" => 'index.php?' . $base . '=$matches[1]' );
+		$json_api_rules = array ("$base\$" => 'index.php?' . $base . '='. self::BASE_PARAM , "$base/(.+)\$" => 'index.php?' . $base . '=$matches[1]' );
 		
 		return array_merge ( $json_api_rules, $wp_rules );
 	}
@@ -379,5 +435,51 @@ class mighty_seramo {
 		}
 		
 		return $value;
+	}
+	
+
+	function sanatise_string($string){
+		$string = str_replace(" ","-", trim($string));
+		$string = preg_replace("/[^a-zA-Z0-9-]/","", $string);
+		$string = strtolower($string);
+		return $string;
+	}
+	
+	public static function register_callback($slug, $callback, $expected_parameters = array() , $settings = array(), $from){
+		
+		// check where this function is being registed from
+		if($from != 'functions' && $from != 'user'){
+			return false;
+		}
+		
+		$cb_slug = str_replace(" ","-", trim($slug));
+		$cb_slug = preg_replace("/[^a-zA-Z0-9-]/","", $cb_slug);
+		$cb_slug = strtolower($cb_slug);
+		
+		if(!is_array($expected_parameters)){
+			$cb_expected_parameters = array();
+		}else{
+			
+			$cb_expected_parameters = $expected_parameters;
+			
+		}
+				
+		self::$callbacks[ $cb_slug ] = array();
+		
+		self::$callbacks[ $cb_slug ]['reg_type'] = $from;
+		
+		self::$callbacks[ $cb_slug ]['expected_parameters'] = $cb_expected_parameters;
+		
+		self::$callbacks[ $cb_slug ]['callback_function'] = $callback;
+		
+		
+		if(!isset($settings['title'])){
+			$settings['title'] = 'Unknown Title';
+		}
+		if(!isset($settings['description'])){
+			$settings['description'] = 'Unknown Description';
+		}	
+		self::$callbacks[ $cb_slug ]['settings'] = $settings;
+		
 	}
 }

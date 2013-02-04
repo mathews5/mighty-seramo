@@ -23,9 +23,8 @@
 		        	function( data ) {
 	     
 	        			jQuery("#seramo_slug").val(data);
+	        			jQuery(".seramo_slug").html(data);
 	        			jQuery(".spinner").hide();
-				        //jQuery("#ajax-response").html('<div class="message updated fade"><p>Items Order Updates</p></div>');
-				       // jQuery("#ajax-response div").delay(3000).hide("slow");
 		        	}
 	        );
         }
