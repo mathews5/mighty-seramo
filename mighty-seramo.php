@@ -522,4 +522,38 @@ class mighty_seramo {
 		self::$callbacks[ $cb_slug ]['settings'] = $settings;
 		
 	}
+	
+	
+	
+	private function save_query(){
+		
+		$query_parameters = array();
+		
+		$query_parameters['post_type'];
+		
+		
+		if(isset($_POST['seramo_arg_post_type'])){
+			
+			if(is_array($_POST['seramo_arg_post_type'])){
+				
+				foreach($_POST['seramo_arg_post_type'] as $post_type){
+					$query_parameters['post_type'][] = sanitize_text_field( $post_type );
+				}
+				
+				if(count($query_parameters['post_type']) == 1){
+					$query_parameters['post_type'] = $query_parameters['post_type'][0];
+					if($query_parameters['post_type'] == ''){$query_parameters['post_type'] = 'any';}
+				}
+				
+			}else{
+				$query_parameters['post_type'] = sanitize_text_field( $_POST['seramo_arg_post_type'] );
+			}
+			
+		}else{
+			$query_parameters['post_type'] = 'any';
+		}
+		
+		
+		
+	}
 }

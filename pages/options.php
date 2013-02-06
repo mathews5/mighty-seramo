@@ -1,6 +1,8 @@
 <?php 
 	$blog_url = get_bloginfo('url');
 	$seramo_slug = get_option ( self::WP_OPTION_SERAMO_SLUG );
+	
+	var_dump($_POST);
 ?>
 <div id="icon-options-general" class="icon32"></div>
 <h2>mightycore - json request stuff lad</h2>
