@@ -25,15 +25,15 @@
 	</p>
 	</div>
 	
-	<p>Create a <a href="#TB_inline?width=600&height=550&inlineId=seramo-addtarget" class="thickbox">custom target</a> to recieve data easily!</p>
+	<p>Create a <a href="?#TB_inline&width=800&height=650&inlineId=seramo-thickbox" class="thickbox seramo-thickbox seramo-gotoqueries">custom query</a> to get data quckly and easily!</p>
 	</div>
 	
 	<div id="tab-queries">
-		<p>Create a <a href="#TB_inline?width=600&height=550&inlineId=seramo-addtarget" class="thickbox">custom target</a> to recieve data easily!</p>
+		<p>Create a <a href="#TB_inline?width=800&height=650&inlineId=seramo-thickbox" class="thickbox seramo-thickbox">custom target</a> to recieve data easily!</p>
 		<hr/>
-		<h2>User Registerd Targets</h2>		
+		<h2>Query Based Targets</h2>		
 		
-		<h2>Function Registerd Targets</h2>
+		<h2>Function Based Targets</h2>
 		<?php 
 		
 			$registered_callbacks = self::$callbacks;
@@ -55,21 +55,10 @@
 	</div>
 	
 </div>
-
 <?php add_thickbox(); ?>
-<div id="seramo-addtarget" style="display:none;">
-     
-     <h2>Create new query target</h2>
-     <form>
-     <label for="seramo_new_target">
-     <span id="seramo-permalink"><?php echo $blog_url; ?>/<span class="seramo_slug"><?php echo $seramo_slug; ?></span>/</span>
-     <input type="text" id="seramo_new_target" name="seramo_new_target" value="">
-     
-     </label>
-     
-     </form>
-     
-     <p>
-          This is my hidden content! It will appear in ThickBox when the link is clicked.
-     </p>
+<div id="seramo-thickbox"  style="display:none;">
+<div id="seramo-thickbox-content"></div>
 </div>
+<?php 
+	//include('add-query.php');
+?>

@@ -9,3 +9,22 @@
 	padding:0.4em;
 	border-radius: 0.2em 0.2em 0.2em 0.2em;
 }
+
+
+
+#TB_window #seramo-thickbox-content a:link.button-primary {
+    color: #FFFFFF;
+}
+#TB_window #seramo-thickbox-content a:visited.button-primary {
+    color: #FFFFFF;
+}
+#TB_window #seramo-thickbox-content a:hover.button-primary {
+    color: #FFFFFF;
+}
+#TB_window #seramo-thickbox-content a:active.button-primary {
+    color: #FFFFFF;
+}
+#TB_window #seramo-thickbox-content a:focus.button-primary {
+    color: #FFFFFF;
+}
+

@@ -106,7 +106,7 @@ class mighty_seramo {
 		add_action ( 'admin_menu', array ( &$this, 'register_plugin_menu') );
 		
 		add_action( 'wp_ajax_mighty_seramo_save_slug', array(&$this, 'form_save_slug') );
-		
+		add_action( 'wp_ajax_mighty_seramo_add_query', array(&$this, 'form_add_query') );
 	}
 	
 	
@@ -124,7 +124,7 @@ class mighty_seramo {
 		// load in the ui core and effects core
 		wp_enqueue_script("jquery-ui-core");
 		wp_enqueue_script("jquery-effects-core");
-		
+		wp_enqueue_script("jquery-ui-button");
 		wp_enqueue_script("jquery-ui-tabs");
 		
 		// load a jquery ui style from google
@@ -149,7 +149,7 @@ class mighty_seramo {
 	private function load_page($page) {
 		$page_file_path = $this->path . 'pages' . DIRECTORY_SEPARATOR . $page . '.php';
 		if (file_exists ( $page_file_path )) {
-			echo '<div id="mighty-page"><div class="wrap">';
+			echo '<div class="wrap"><div class="mighty-page">';
 			include_once $page_file_path;
 			echo '</div></div>';
 		} else {
@@ -161,6 +161,15 @@ class mighty_seramo {
 	
 	
 	
+	
+	/**
+	 *  Ajax handler for wp_ajax_mighty_seramo_save_slug
+	 *	saves the new slug
+	 *
+	 *
+	 * @return (none)
+	 *
+	 */
 	function form_save_slug(){
 		
 		$new_json_slug = sanitize_title( $_POST['new_slug'] );
@@ -169,6 +178,21 @@ class mighty_seramo {
 		return exit ( $new_slug );
 	}
 	
+	
+	
+	
+	
+	/**
+	 *  Ajax handler for wp_ajax_mighty_seramo_add_query
+	 *	loads the add-query page
+	 *
+	 *
+	 * @return (none)
+	 *
+	 */
+	function form_add_query(){
+		return exit( $this->load_page('add-query') );
+	}
 	
 	/**
 	 * Sets the new slug in place for the json call
@@ -445,10 +469,26 @@ class mighty_seramo {
 		return $string;
 	}
 	
+	function current_page_url() {
+		$pageURL = 'http';
+		if( isset($_SERVER["HTTPS"]) ) {
+			if ($_SERVER["HTTPS"] == "on") {
+				$pageURL .= "s";
+			}
+		}
+		$pageURL .= "://";
+		if ($_SERVER["SERVER_PORT"] != "80") {
+			$pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
+		} else {
+			$pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
+		}
+		return $pageURL;
+	}
+	
 	public static function register_callback($slug, $callback, $expected_parameters = array() , $settings = array(), $from){
 		
 		// check where this function is being registed from
-		if($from != 'functions' && $from != 'user'){
+		if($from != 'function' && $from != 'user'){
 			return false;
 		}
 		

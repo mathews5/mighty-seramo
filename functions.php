@@ -2,11 +2,11 @@
 
 
 function seramo_register_callback($slug, $callback, $expected_parameters=array(), $settings=array()){
-	mighty_seramo::register_callback($slug, $callback, $expected_parameters, $settings, 'functions');
+	mighty_seramo::register_callback($slug, $callback, $expected_parameters, $settings, 'function');
 }
 
-seramo_register_callback('herpaderp','mysuperdopefunction', array('smeg', 'head'), array());
 
+seramo_register_callback('herpaderp','mysuperdopefunction', array('smeg', 'head'), array());
 
 
 function mysuperdopefunction(){
